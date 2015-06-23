@@ -39,6 +39,7 @@
         _closedScale = kDefaultDepthStyleClosedScale;
         _blurRadius = kDefaultBlurRadius;
         _blackMaskAlpha = kDefaultBlackMaskAlpha;
+        _contentAnimation = NO;
         
         _currentState = LMDropdownViewStateDidClose;
     }
@@ -65,8 +66,10 @@
         // Animate menu view controller
         [self addMenuAnimationForMenuState:_currentState];
         
-        // Animate content view controller
-        [self addContentAnimationForMenuState:_currentState];
+        if (self.contentAnimation) {
+            // Animate content view controller
+            [self addContentAnimationForMenuState:_currentState];
+        }
         
         // Finish showing
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.animationDuration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -81,17 +84,25 @@
     {
         _currentState = LMDropdownViewStateWillClose;
         
+        [UIView animateWithDuration:self.animationDuration animations:^{
+            self.backgroundButton.alpha = 0.0f;
+            self.contentView.alpha = 0.0f;
+        } completion:^(BOOL finished) {
+            [self.backgroundButton removeFromSuperview];
+            [self.contentView removeFromSuperview];
+        }];
+        
         // Animate menu view controller
         [self addMenuAnimationForMenuState:_currentState];
         
-        // Animate content view controller
-        [self addContentAnimationForMenuState:_currentState];
+        if (self.contentAnimation) {
+            // Animate content view controller
+            [self addContentAnimationForMenuState:_currentState];
+        }
         
         // Finish hiding
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.animationDuration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [self.menuView removeFromSuperview];
-            [self.backgroundButton removeFromSuperview];
-            [self.contentView removeFromSuperview];
             [self.mainView removeFromSuperview];
             
             _currentState = LMDropdownViewStateDidClose;
@@ -123,8 +134,8 @@
     // Content Image View
     if (!self.contentView) {
         self.contentView = [[UIImageView alloc] init];
-        self.contentView.backgroundColor = [UIColor blackColor];
         self.contentView.contentMode = UIViewContentModeCenter;
+        self.contentView.alpha = 0.0f;
     }
     self.contentView.image = blurredCapturedImage;
     [self.contentView setFrame:CGRectMake(-contentSize.width * (1 - self.closedScale),
@@ -133,16 +144,20 @@
                                           contentSize.height * (3 - 2 * self.closedScale))];
     [self.mainView addSubview:self.contentView];
     
-    
     // Background Button
     if (!self.backgroundButton) {
         self.backgroundButton = [UIButton buttonWithType:UIButtonTypeCustom];
         self.backgroundButton.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:self.blackMaskAlpha];
         [self.backgroundButton addTarget:self action:@selector(backgroundButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        self.backgroundButton.alpha = 0.0f;
     }
     [self.backgroundButton setFrame:CGRectMake(0, 0, self.mainView.frame.size.width, self.mainView.frame.size.height)];
     [self.mainView addSubview:self.backgroundButton];
     
+    [UIView animateWithDuration:self.animationDuration animations:^{
+        self.backgroundButton.alpha = 1.0f;
+        self.contentView.alpha = 1.0f;
+    }];
     
     // Menu Table View
     if (!self.menuView) {

@@ -25,6 +25,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, assign) CGFloat blackMaskAlpha;
 @property (nonatomic, strong) UIView *menuContentView;
 @property (nonatomic, strong) UIColor *menuBackgroundColor;
+@property (nonatomic) BOOL contentAnimation;
 
 @property (nonatomic, assign, readonly) LMDropdownViewState currentState;
 @property (nonatomic, assign) id <LMDropdownViewDelegate> delegate;
